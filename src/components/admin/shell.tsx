@@ -127,13 +127,16 @@ export function Table({ children }: { children: React.ReactNode }) {
 export function Th({
   children,
   className,
+  colSpan,
 }: {
   children?: React.ReactNode;
   className?: string;
+  colSpan?: number;
 }) {
   return (
     <th
       scope="col"
+      colSpan={colSpan}
       className={cn(
         "label-caps-sm border-b border-line px-4 py-3 text-left font-medium text-ink-muted",
         className,
@@ -147,12 +150,17 @@ export function Th({
 export function Td({
   children,
   className,
+  colSpan,
 }: {
   children?: React.ReactNode;
   className?: string;
+  colSpan?: number;
 }) {
   return (
-    <td className={cn("border-b border-line px-4 py-3 align-middle", className)}>
+    <td
+      colSpan={colSpan}
+      className={cn("border-b border-line px-4 py-3 align-middle", className)}
+    >
       {children}
     </td>
   );
