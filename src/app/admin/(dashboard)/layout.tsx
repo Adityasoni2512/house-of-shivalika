@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Toaster } from "sonner";
 
 import { requireAdmin } from "@/lib/auth";
 import { signOutAction } from "@/lib/actions/auth";
@@ -76,6 +77,18 @@ export default async function AdminLayout({
           <main className="px-5 py-6 lg:px-8 lg:py-8">{children}</main>
         </div>
       </div>
+
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          style: {
+            borderRadius: "2px",
+            border: "1px solid var(--color-line)",
+            fontFamily: "var(--font-sans)",
+            fontSize: "0.8125rem",
+          },
+        }}
+      />
     </div>
   );
 }
