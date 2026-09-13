@@ -49,6 +49,7 @@ export default async function AnalyticsPage({
 
   const { days = "30" } = await searchParams;
   const windowDays = Math.min(365, Math.max(1, Number(days) || 30));
+  // eslint-disable-next-line react-hooks/purity -- async Server Component: reading the clock per request is the intent, not a render-purity violation
   const since = new Date(Date.now() - windowDays * 864e5).toISOString();
 
   const db = createAdminClient();

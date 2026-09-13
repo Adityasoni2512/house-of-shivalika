@@ -9,6 +9,10 @@ import { track, type EventPayload, type EventType } from "@/lib/analytics";
  * Fires a single event on mount. Used for page_view, category_view and search.
  * Keyed on pathname so client-side navigation between two products still counts
  * as two views.
+ *
+ * The payload is serialised into the effect's dependency list rather than held
+ * in a ref: refs must not be written during render, and the payload is a small
+ * flat object so stringifying it is cheap.
  */
 export function TrackView({
   event,
@@ -19,14 +23,15 @@ export function TrackView({
 }) {
   const pathname = usePathname();
   const fired = useRef<string | null>(null);
-  const payloadRef = useRef(payload);
-  payloadRef.current = payload;
+  const payloadKey = payload ? JSON.stringify(payload) : "";
 
   useEffect(() => {
-    if (fired.current === pathname) return;
-    fired.current = pathname;
-    track(event, payloadRef.current);
-  }, [event, pathname]);
+    const key = `${pathname}|${event}|${payloadKey}`;
+    if (fired.current === key) return;
+
+    fired.current = key;
+    track(event, payloadKey ? (JSON.parse(payloadKey) as EventPayload) : undefined);
+  }, [event, pathname, payloadKey]);
 
   return null;
 }
@@ -45,14 +50,14 @@ export function TrackProductView({
   categoryId?: string;
   dwellMs?: number;
 }) {
-  const fired = useRef(false);
+  const fired = useRef<string | null>(null);
 
   useEffect(() => {
-    if (fired.current) return;
+    if (fired.current === productId) return;
 
     const timer = setTimeout(() => {
       if (document.visibilityState !== "visible") return;
-      fired.current = true;
+      fired.current = productId;
       track("product_view", { product_id: productId, category_id: categoryId });
     }, dwellMs);
 

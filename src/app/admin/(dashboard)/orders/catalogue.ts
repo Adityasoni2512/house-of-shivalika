@@ -44,5 +44,9 @@ export async function loadCatalogue(): Promise<CatalogueVariant[]> {
         a.productName.localeCompare(b.productName) ||
         a.sizePosition - b.sizePosition,
     )
-    .map(({ sizePosition: _sizePosition, ...entry }) => entry);
+    .map((entry) => {
+      const { sizePosition, ...rest } = entry;
+      void sizePosition;
+      return rest;
+    });
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Minus, Plus } from "lucide-react";
@@ -104,12 +105,12 @@ export function AddToCart({
       <div>
         <div className="flex items-baseline justify-between">
           <p className="label-caps">Size</p>
-          <a
+          <Link
             href="/size-guide"
             className="text-xs text-accent underline underline-offset-4"
           >
             Size guide
-          </a>
+          </Link>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">

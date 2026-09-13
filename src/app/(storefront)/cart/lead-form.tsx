@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { X } from "lucide-react";
 import { toast } from "sonner";
@@ -31,7 +32,7 @@ export function LeadForm({
   onClose: () => void;
   onSent: () => void;
 }) {
-  const { lines, subtotal, clear } = useCart();
+  const { lines, clear } = useCart();
   const [error, setError] = useState<string | null>(null);
   const [unavailable, setUnavailable] = useState<{ name: string; size: string }[]>([]);
   const [pending, startTransition] = useTransition();
@@ -210,9 +211,9 @@ export function LeadForm({
           <p className="text-xs leading-relaxed text-ink-muted">
             By continuing you agree to us contacting you about this order. We do
             not take payment on this site. See our{" "}
-            <a href="/privacy" className="underline underline-offset-2">
+            <Link href="/privacy" className="underline underline-offset-2">
               privacy policy
-            </a>
+            </Link>
             .
           </p>
         </form>

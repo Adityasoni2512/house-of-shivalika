@@ -1,22 +1,22 @@
 "use client";
 
+import { createContext, useCallback, useContext, useMemo } from "react";
+
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+  createBrowserStore,
+  useBrowserStore,
+  useHasHydrated,
+} from "@/lib/browser-store";
 
 /**
  * The cart lives entirely in the browser.
  *
  * Nothing is written to the database until the lead form is submitted, which is
  * the whole point of the WhatsApp model: no accounts, no server-side sessions,
- * no abandoned-cart rows to clean up. localStorage can throw (private windows,
- * blocked site data), so every access is wrapped — a broken storage API must
- * degrade to an in-memory cart, never a crash.
+ * no abandoned-cart rows to clean up.
+ *
+ * Backed by useSyncExternalStore so the server and the first client render
+ * agree on an empty cart, then the real contents arrive without a mismatch.
  */
 
 const STORAGE_KEY = "hos.cart.v1";
@@ -35,6 +35,37 @@ export type CartLine = {
   maxQty: number;
 };
 
+const EMPTY: CartLine[] = [];
+
+function parseCart(raw: string | null): CartLine[] {
+  if (!raw) return EMPTY;
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return EMPTY;
+
+    // Defensive: a stale schema from an older build must not crash the cart.
+    const lines = parsed.filter(
+      (line): line is CartLine =>
+        typeof line?.variantId === "string" &&
+        typeof line?.productId === "string" &&
+        typeof line?.price === "number" &&
+        typeof line?.qty === "number" &&
+        line.qty > 0,
+    );
+
+    return lines.length > 0 ? lines : EMPTY;
+  } catch {
+    return EMPTY;
+  }
+}
+
+const cartStore = createBrowserStore<CartLine[]>({
+  key: STORAGE_KEY,
+  parse: parseCart,
+  serverValue: EMPTY,
+});
+
 type CartContextValue = {
   lines: CartLine[];
   itemCount: number;
@@ -48,80 +79,33 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | null>(null);
 
-function readStorage(): CartLine[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-
-    // Defensive: a stale schema from an older build must not crash the cart.
-    return parsed.filter(
-      (line): line is CartLine =>
-        typeof line?.variantId === "string" &&
-        typeof line?.productId === "string" &&
-        typeof line?.price === "number" &&
-        typeof line?.qty === "number" &&
-        line.qty > 0,
-    );
-  } catch {
-    return [];
-  }
-}
-
-function writeStorage(lines: CartLine[]) {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(lines));
-  } catch {
-    // Quota exceeded or storage blocked — the in-memory cart still works.
-  }
-}
-
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [lines, setLines] = useState<CartLine[]>([]);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Read after mount so server and client render the same empty cart first —
-  // reading during render would cause a hydration mismatch.
-  useEffect(() => {
-    setLines(readStorage());
-    setIsHydrated(true);
-  }, []);
-
-  useEffect(() => {
-    if (isHydrated) writeStorage(lines);
-  }, [lines, isHydrated]);
-
-  // Keep multiple tabs in sync.
-  useEffect(() => {
-    function onStorage(event: StorageEvent) {
-      if (event.key === STORAGE_KEY) setLines(readStorage());
-    }
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  const lines = useBrowserStore(cartStore);
+  const isHydrated = useHasHydrated();
 
   const add = useCallback((line: Omit<CartLine, "qty">, qty = 1) => {
-    setLines((prev) => {
-      const existing = prev.find((l) => l.variantId === line.variantId);
+    const current = cartStore.read();
+    const existing = current.find((l) => l.variantId === line.variantId);
+    const cap = line.maxQty || 99;
 
-      if (existing) {
-        const nextQty = Math.min(existing.qty + qty, line.maxQty || 99);
-        return prev.map((l) =>
-          l.variantId === line.variantId ? { ...l, ...line, qty: nextQty } : l,
-        );
-      }
-
-      return [...prev, { ...line, qty: Math.min(qty, line.maxQty || 99) }];
-    });
+    cartStore.write(
+      existing
+        ? current.map((l) =>
+            l.variantId === line.variantId
+              ? { ...l, ...line, qty: Math.min(l.qty + qty, cap) }
+              : l,
+          )
+        : [...current, { ...line, qty: Math.min(qty, cap) }],
+    );
   }, []);
 
   const setQty = useCallback((variantId: string, qty: number) => {
-    setLines((prev) =>
+    const current = cartStore.read();
+
+    cartStore.write(
       qty <= 0
-        ? prev.filter((l) => l.variantId !== variantId)
-        : prev.map((l) =>
+        ? current.filter((l) => l.variantId !== variantId)
+        : current.map((l) =>
             l.variantId === variantId
               ? { ...l, qty: Math.min(qty, l.maxQty || 99) }
               : l,
@@ -130,10 +114,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const remove = useCallback((variantId: string) => {
-    setLines((prev) => prev.filter((l) => l.variantId !== variantId));
+    cartStore.write(cartStore.read().filter((l) => l.variantId !== variantId));
   }, []);
 
-  const clear = useCallback(() => setLines([]), []);
+  const clear = useCallback(() => cartStore.write(EMPTY), []);
 
   const value = useMemo<CartContextValue>(() => {
     const itemCount = lines.reduce((sum, l) => sum + l.qty, 0);

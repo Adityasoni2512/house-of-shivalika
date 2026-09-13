@@ -23,6 +23,7 @@ export default async function DashboardPage() {
   await requireAdmin();
 
   const db = createAdminClient();
+  // eslint-disable-next-line react-hooks/purity -- async Server Component: reading the clock per request is the intent, not a render-purity violation
   const sevenDaysAgo = new Date(Date.now() - 7 * 864e5).toISOString();
 
   const [

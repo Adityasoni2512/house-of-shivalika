@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -71,12 +72,12 @@ export default async function ReviewPage({
         <div className="mx-auto max-w-md text-center">
           <h1 className="font-serif text-3xl">Review link</h1>
           <p className="mt-4 text-sm text-ink-muted">{invite.reason}</p>
-          <a
+          <Link
             href="/"
             className="label-caps mt-8 inline-block text-accent underline underline-offset-4"
           >
             Visit {settings.brand_name}
-          </a>
+          </Link>
         </div>
       </div>
     );

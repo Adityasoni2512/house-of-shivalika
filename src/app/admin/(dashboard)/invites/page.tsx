@@ -26,6 +26,7 @@ export default async function InvitesPage() {
     getSettings(),
   ]);
 
+  // eslint-disable-next-line react-hooks/purity -- async Server Component: reading the clock per request is the intent, not a render-purity violation
   const now = Date.now();
 
   const rows: InviteRow[] = (invites ?? []).map((invite) => ({

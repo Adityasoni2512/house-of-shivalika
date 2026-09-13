@@ -2,10 +2,20 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+
+import { createBrowserStore, useBrowserStore } from "@/lib/browser-store";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 
 import { useCart } from "@/lib/cart";
 import { cn } from "@/lib/utils";
+
+const announcementStore = createBrowserStore<boolean>({
+  key: "hos.announcement.dismissed",
+  area: "session",
+  parse: (raw) => raw === "1",
+  serialize: (value) => (value ? "1" : "0"),
+  serverValue: false,
+});
 
 export type NavCategory = {
   name: string;
@@ -26,7 +36,7 @@ export function Header({
   const { itemCount, isHydrated } = useCart();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
-  const [announcementDismissed, setAnnouncementDismissed] = useState(false);
+  const announcementDismissed = useBrowserStore(announcementStore);
 
   // Lock body scroll behind the mobile drawer.
   useEffect(() => {
@@ -36,23 +46,8 @@ export function Header({
     };
   }, [menuOpen]);
 
-  useEffect(() => {
-    try {
-      setAnnouncementDismissed(
-        window.sessionStorage.getItem("hos.announcement.dismissed") === "1",
-      );
-    } catch {
-      // Storage blocked — just show the bar.
-    }
-  }, []);
-
   function dismissAnnouncement() {
-    setAnnouncementDismissed(true);
-    try {
-      window.sessionStorage.setItem("hos.announcement.dismissed", "1");
-    } catch {
-      /* no-op */
-    }
+    announcementStore.write(true);
   }
 
   return (

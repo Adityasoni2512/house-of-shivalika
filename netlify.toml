@@ -1,0 +1,41 @@
+# Netlify deploy configuration.
+#
+# Netlify rather than Vercel deliberately: Vercel's free Hobby tier prohibits
+# commercial use, and this is a revenue-generating store. Netlify's free tier
+# permits it explicitly and has first-class Next.js support.
+
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+  NEXT_TELEMETRY_DISABLED = "1"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# Nightly maintenance: keeps Supabase awake, rolls up analytics, prunes old
+# events, expires stale review invites. See src/app/api/cron/route.ts
+[functions."cron-maintenance"]
+  schedule = "0 19 * * *"   # 19:00 UTC = 00:30 IST
+
+# Security headers are also set in next.config.ts; these apply to static assets
+# that bypass the Next.js runtime.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+
+[[headers]]
+  for = "/admin/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/review/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"

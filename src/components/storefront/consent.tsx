@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import Script from "next/script";
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { createBrowserStore, useBrowserStore } from "@/lib/browser-store";
 
 /**
  * Cookie consent, and the ad/analytics tags it gates.
@@ -17,6 +19,15 @@ import { Button } from "@/components/ui/button";
 const STORAGE_KEY = "hos.consent";
 
 type ConsentValue = "accepted" | "declined" | null;
+
+const consentStore = createBrowserStore<ConsentValue>({
+  key: STORAGE_KEY,
+  parse: (raw) => (raw === "accepted" || raw === "declined" ? raw : null),
+  serialize: (value) => value ?? "",
+  // The server renders as undecided, so the banner is in the HTML for anyone
+  // who has not chosen. A returning visitor's choice arrives on hydration.
+  serverValue: null,
+});
 
 const ConsentContext = createContext<{
   consent: ConsentValue;
@@ -38,42 +49,24 @@ export function ConsentProvider({
   googleAdsId: string;
   children: React.ReactNode;
 }) {
-  const [consent, setConsent] = useState<ConsentValue>(null);
-  const [decided, setDecided] = useState(true); // assume decided until we know
+  const consent = useBrowserStore(consentStore);
   const [forceOpen, setForceOpen] = useState(false);
 
-  useEffect(() => {
-    let stored: string | null = null;
-    try {
-      stored = window.localStorage.getItem(STORAGE_KEY);
-    } catch {
-      // Storage blocked — we cannot record a choice, so we cannot claim consent.
-    }
-
-    if (stored === "accepted" || stored === "declined") {
-      setConsent(stored);
-      setDecided(true);
-    } else {
-      setDecided(false);
-    }
-  }, []);
-
   const choose = useCallback((value: "accepted" | "declined") => {
-    setConsent(value);
-    setDecided(true);
+    consentStore.write(value);
     setForceOpen(false);
 
+    // Record when consent was given — needed to evidence it later.
     try {
-      window.localStorage.setItem(STORAGE_KEY, value);
       window.localStorage.setItem(`${STORAGE_KEY}.at`, new Date().toISOString());
     } catch {
-      /* no-op */
+      /* storage blocked — the choice still applies for this session */
     }
   }, []);
 
   const open = useCallback(() => setForceOpen(true), []);
 
-  const showBanner = !decided || forceOpen;
+  const showBanner = consent === null || forceOpen;
   const tagsEnabled = consent === "accepted";
   const hasAnyTag = Boolean(ga4Id || metaPixelId || googleAdsId);
 
@@ -118,14 +111,18 @@ fbq('init','${metaPixelId}');fbq('track','PageView');`}
               We use cookies from Google and Meta to understand how our
               advertising performs. Our own site statistics are anonymous and do
               not identify you. See our{" "}
-              <a href="/privacy" className="underline underline-offset-2">
+              <Link href="/privacy" className="underline underline-offset-2">
                 privacy policy
-              </a>
+              </Link>
               .
             </p>
 
             <div className="flex shrink-0 gap-2">
-              <Button size="sm" variant="secondary" onClick={() => choose("declined")}>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => choose("declined")}
+              >
                 Decline
               </Button>
               <Button size="sm" onClick={() => choose("accepted")}>
