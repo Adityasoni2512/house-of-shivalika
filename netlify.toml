@@ -5,6 +5,22 @@
 # permits it explicitly and has first-class Next.js support.
 
 [build]
+  # Deploys must be built by Netlify CI, not locally.
+  #
+  # `netlify deploy --build` from the Windows dev machine fails while bundling
+  # the edge middleware: the plugin cannot resolve middleware.js's sibling
+  # runtime file, and the error path is visibly malformed —
+  #   file:///Shivalika%20Website/C:/Shivalika%20Website/.netlify/...
+  # a doubled path caused by the space in the project directory name. It fails
+  # the same way under both Turbopack and webpack, so it is a path-handling
+  # problem in the local build, not a bundler limitation.
+  #
+  # Building on Netlify's Linux runners avoids it entirely, and is the right
+  # setup regardless: shipping from a developer's laptop is not reproducible.
+  #
+  # `npm run build` is "next build --webpack"; `npm run build:turbo` is the
+  # Next 16 default. Webpack is kept as the conservative choice until a green
+  # CI build proves Turbopack works here too.
   command = "npm run build"
   publish = ".next"
 
