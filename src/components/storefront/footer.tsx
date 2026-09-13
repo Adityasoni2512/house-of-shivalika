@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import { ConsentReopenButton } from "./consent";
+
 import type { NavCategory } from "./header";
 
 /** lucide-react dropped brand icons, so the glyph is inlined. */
@@ -158,9 +160,12 @@ export function Footer({
           <p className="text-xs text-ink-muted">
             © {year} {brandName}. All rights reserved.
           </p>
-          {gstin ? (
-            <p className="text-xs text-ink-muted">GSTIN: {gstin}</p>
-          ) : null}
+          <div className="flex items-center gap-4">
+            {gstin ? (
+              <p className="text-xs text-ink-muted">GSTIN: {gstin}</p>
+            ) : null}
+            <ConsentReopenButton />
+          </div>
         </div>
       </div>
     </footer>
