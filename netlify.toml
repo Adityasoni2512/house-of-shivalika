@@ -15,10 +15,12 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Nightly maintenance: keeps Supabase awake, rolls up analytics, prunes old
-# events, expires stale review invites. See src/app/api/cron/route.ts
-[functions."cron-maintenance"]
-  schedule = "0 19 * * *"   # 19:00 UTC = 00:30 IST
+# Nightly maintenance runs from netlify/functions/cron-maintenance.mjs, which
+# declares its own schedule via the exported `config`. Declaring it here as well
+# would be a second source of truth, so it deliberately is not repeated.
+#
+# The function is a shim: Netlify's scheduler can only invoke a Netlify Function,
+# not a Next.js route handler, so it calls /api/cron with the shared secret.
 
 # Security headers are also set in next.config.ts; these apply to static assets
 # that bypass the Next.js runtime.
