@@ -10,7 +10,14 @@ import { touchLastLogin } from "@/lib/auth";
 const signInSchema = z.object({
   email: z.string().trim().toLowerCase().email("Enter a valid email address"),
   password: z.string().min(1, "Enter your password"),
-  next: z.string().optional(),
+  /*
+   * nullish, not optional: formData.get() returns null for a field that is not
+   * present, and z.optional() only permits undefined. The login form omits the
+   * hidden `next` input entirely when there is no redirect target, so
+   * .optional() here rejected every sign-in that started at /admin/login
+   * directly — while sign-ins arriving via /admin (which appends ?next=) passed.
+   */
+  next: z.string().nullish(),
 });
 
 export type SignInState = { error?: string };
@@ -26,7 +33,20 @@ export async function signInAction(
   });
 
   if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid details" };
+    /*
+     * Only surface messages for fields the user can actually see and fix.
+     * Anything else is our bug, not theirs — show something neutral rather
+     * than a raw validation message like "expected string, received null".
+     */
+    const visible = parsed.error.issues.find(
+      (issue) => issue.path[0] === "email" || issue.path[0] === "password",
+    );
+
+    if (!visible) {
+      console.error("signInAction: unexpected validation failure", parsed.error.issues);
+    }
+
+    return { error: visible?.message ?? "Something went wrong. Please try again." };
   }
 
   const { email, password, next } = parsed.data;
