@@ -1,7 +1,9 @@
 # House of Shivalika — Master Project Plan
 
-> **Status:** Approved spec, pre-build
-> **Last updated:** 2026-09-12
+> **Status:** ✅ Build complete — pre-launch. All code is written, tested against the
+> live database, and pushed. What remains is external setup and content, tracked in
+> [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md).
+> **Last updated:** 2026-09-13
 > **Owner:** Aditya
 > **This file is the single source of truth.** Every decision below was confirmed by the client. If a decision changes, change it here first, then in code.
 
@@ -923,39 +925,68 @@ GA4 / Meta Pixel / Google Ads IDs live in `site_settings` in the database, not i
 
 ---
 
-## 17. Build phases
+## 17. Build phases — ✅ all complete
 
-Every phase ends with a working, reviewable local preview at `http://localhost:3000`.
+Delivered across 14 commits on `main`. Local preview: `http://localhost:3000`,
+admin at `/admin`.
 
-### Phase 0 — Foundation
-Next.js + TypeScript + Tailwind scaffold · design tokens, fonts, base components · GitHub repo with `.gitignore` and `.env.example` · Supabase project + full schema migration + seed · generated DB types · Cloudinary account and signed upload helper · `CLAUDE.md` and `README.md`.
-**Deliverable:** repo running locally, connected to a live database.
+| Phase | Status | Delivered |
+|---|---|---|
+| **0 — Foundation** | ✅ | Next.js 16.3.5 · React 19.2.8 · Tailwind v4 · TypeScript · design tokens · Instrument Serif + Inter · base primitives · 17-table schema pushed to Supabase · generated types · Cloudinary signed uploads |
+| **1 — Admin core** | ✅ | Supabase Auth · `proxy.ts` route guard · admin shell · Sizes · Categories tree · Products CRUD with per-size stock and duplicate · Stock screen · Settings |
+| **2 — Storefront** | ✅ | Header with dropdowns and mobile drawer · footer · announcement bar · homepage · listing with URL-driven filters · PDP with gallery, zoom, size states · search · 404 |
+| **3 — Cart & WhatsApp** | ✅ | Cart via `useSyncExternalStore` · lead capture with server-side re-verification · WhatsApp message builder · floating button · Leads module with Convert to Order · Orders with status pipeline and stock decrement |
+| **4 — Reviews** | ✅ | Invite generation with WhatsApp send · token-gated public form with photo upload · moderation queue · reviews and rating summary on the PDP |
+| **5 — Analytics & SEO** | ✅ | Batched first-party event tracking · `/api/track` with bot filtering · cookie consent gating GA4/Meta/Ads · 6-panel analytics dashboard · sitemap · robots · JSON-LD · OG tags |
+| **6 — Content & ops** | ✅ | Copy drafted and loaded for all seven pages · Pages editor · Banners with scheduling · Admins module · nightly cron · `netlify.toml` · docs |
 
-### Phase 1 — Admin core
-Supabase Auth + login + middleware guard · admin shell · Sizes · Categories tree · Products CRUD with image upload and per-size stock · Settings.
-**Deliverable:** the team can load the entire catalogue. *Client can start entering real products from here.*
+### Verified against the live database, not assumed
 
-### Phase 2 — Storefront core
-Header, footer, announcement bar, homepage · listing pages with filters, sort, load-more · product detail with gallery, size selector, accordions · search · 404/500.
-**Deliverable:** a fully browsable public store.
+| Check | Result |
+|---|---|
+| RLS blocks anon reads on populated tables | ✅ `sizes`, `pages`, `site_settings`, `admins` all return 0 rows |
+| RLS blocks anon writes | ✅ rejected `42501` |
+| Signed-in admin via anon key | ✅ still 0 rows — data access is service-role only |
+| MRP below selling price | ✅ rejected `23514` |
+| Negative stock | ✅ rejected `23514` |
+| Duplicate product slug | ✅ rejected `23505` |
+| Delete category holding products | ✅ blocked `23503` |
+| Second review on one invite | ✅ rejected `23505` |
+| Rating outside 1–5 | ✅ rejected `23514` |
+| Pending review on the storefront | ✅ not rendered; renders after approval |
+| Analytics ingest | ✅ valid events written; bot UA and malformed payloads dropped |
+| Cron endpoint | ✅ 401 without secret; all four tasks run with it |
+| All 12 routes | ✅ expected status codes, 404 returns a real 404 |
+| `tsc --noEmit` / `eslint` / `next build` | ✅ all clean |
 
-### Phase 3 — Cart & WhatsApp
-Cart context + localStorage · cart page · lead capture modal with server-side stock revalidation · lead persistence · WhatsApp message builder and handoff · floating WhatsApp button · Leads module in admin with "Convert to Order" · Orders module with the status pipeline.
-**Deliverable:** the store can take orders end to end.
+### Where implementation diverged from this plan
 
-### Phase 4 — Reviews
-Review invite generation + WhatsApp send · public token-gated review form with photo upload · moderation queue · reviews on the product page with the rating summary.
-**Deliverable:** social proof is live.
+1. **`middleware.ts` → `proxy.ts`.** Next.js 16 renamed the convention; the old
+   name warns on every boot.
+2. **Cart uses `useSyncExternalStore`,** not `useState` + `useEffect`. The
+   effect pattern renders once with an empty cart and again with the real one,
+   which flashes and cascades. The same helper backs cookie consent and the
+   announcement bar.
+3. **PostHog dropped from v1.** First-party events plus GA4 and Meta Pixel cover
+   everything on the agreed dashboard; PostHog can be added later in an
+   afternoon.
+4. **Analytics aggregates in JS, not SQL.** PostgREST has no `GROUP BY`, and six
+   database functions for six panels is more machinery than this volume
+   warrants. Capped at 50k rows; past that the `analytics_daily` rollup takes
+   over.
+5. **`@supabase/cli-windows-x64` sits in `optionalDependencies`.** It is
+   `os: ["win32"]` and would break `npm ci` on Netlify's Linux builders with
+   `EBADPLATFORM` if declared as a direct dev dependency.
+6. **Lighthouse pass deferred.** Meaningless against placeholder imagery — run
+   it once real product photography is loaded.
 
-### Phase 5 — Analytics & SEO
-Event tracking client + `/api/track` · cookie consent banner · GA4 / Meta Pixel / Google Ads gated on consent · admin analytics dashboard · sitemap, robots, JSON-LD, OG images, metadata · Lighthouse pass.
-**Deliverable:** measurable, indexable, ad-ready.
+### Known, accepted limitation
 
-### Phase 6 — Content & launch
-Draft and load copy for all seven static pages · Pages admin module · Banners module · domain purchase and DNS · Netlify production deploy · GSC + Bing verification, sitemap submission · nightly cron (keep-alive + analytics rollup) · final QA across devices.
-**Deliverable:** live.
-
-**Parallelisation:** the client can generate product photography and supply brand details from Phase 0 onward. Real products can be entered as soon as Phase 1 lands, so Phase 2 is built against real data rather than lorem ipsum.
+`adjustStockAction` reads then writes. Two admins decrementing the same variant
+at the same instant could both read 5 and both write 4. Documented rather than
+solved: this is a two-person team working from WhatsApp conversations, and the
+value is clamped at zero so it can never go negative. If the team grows, replace
+it with a Postgres function applying an atomic delta.
 
 ---
 
@@ -979,22 +1010,57 @@ Draft and load copy for all seven static pages · Pages admin module · Banners 
 
 ## 19. Open items — needed from client
 
-Blockers are marked ⛔. Everything else can be filled in with a placeholder and swapped later without rework.
+The code is finished. Everything below is external setup or content, with
+step-by-step instructions in [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md).
 
-| # | Item | Needed by | Notes |
+### Done ✅
+
+| Item | Detail |
+|---|---|
+| GitHub repository | `Adityasoni2512/house-of-shivalika`, 14 commits |
+| Supabase project | `jswlbptdefeezpsessub` · ap-southeast-1 · Postgres 17.6 · schema applied |
+| First admin account | Created; password change is built into **admin → Admins** |
+
+### Blocking launch ⛔
+
+| # | Item | Blocks | Where it goes |
 |---|---|---|---|
-| 1 | ⛔ **WhatsApp business number** | Phase 3 | The number orders will land on. Placeholder until then |
-| 2 | ⛔ **Domain confirmation** | Phase 6 | `houseofshivalika.com` is the obvious pick — availability to be checked. `.in` as a backup. Register at Cloudflare |
-| 3 | ⛔ **Category tree for launch** | Phase 1 | Can be entered directly in the admin panel once Phase 1 lands — no need to send it to us |
-| 4 | ⛔ **Product photography + product data** | Phase 1 onward | The real critical-path item. Everything else can be built without it |
-| 5 | **Logo** | Phase 2 | If none exists, we'll set a clean Instrument Serif wordmark that reads as intentional and is easy to replace |
-| 6 | **Contact details** | Phase 6 | Email, phone and business address for the Contact page and legal pages |
-| 7 | **Instagram handle** | Phase 2 | For the footer and `Organization` schema |
-| 8 | **Shipping & returns policy** | Phase 6 | Actual numbers: shipping charge, free-shipping threshold, returns window, who pays return postage, what's non-returnable |
-| 9 | **Size chart measurements** | Phase 6 | Real bust/waist/hip/length figures in inches per size. Without these the Size Guide page is filler and returns go up |
-| 10 | **GA4 / Meta Pixel / Google Ads IDs** | Phase 5 | Can be added in admin Settings any time after launch |
-| 11 | **Brand story copy** | Phase 6 | 100–150 words for the homepage and About page. We'll draft it if none is supplied |
-| 12 | **Account access** | Phase 0 | We'll create Supabase, Cloudinary, Netlify and GitHub under the client's email and hand over credentials, or accept invites to existing accounts — client's preference |
+| 1 | **Cloudinary account** | Every image upload — products, banners, review photos | `.env.local`, then Netlify env vars |
+| 2 | **Product photography + catalogue data** | Having anything to sell. The real critical path | admin → Products |
+| 3 | **WhatsApp business number** | Taking a single order. Buttons stay hidden until set | admin → Settings |
+| 4 | **Domain** | Going live. `houseofshivalika.com`, `.in` as backup. Cloudflare Registrar | DNS |
+| 5 | **Netlify account** | Deployment. **Not Vercel** — see §18.1 | — |
+
+### Needed before launch, not blocking the build
+
+| # | Item | Why it matters |
+|---|---|---|
+| 6 | **Shipping & returns numbers** | The drafted pages carry `[BRACKETED]` placeholders. These are commitments to customers |
+| 7 | **Size chart measurements** | Real bust/waist/hip figures. The single biggest lever on return rates in fast fashion |
+| 8 | **Legal sign-off** | Shipping, Returns, Privacy, Terms — read and approve. We are not your lawyers |
+| 9 | **Contact details** | Email, phone, address for the Contact page and `Organization` schema |
+| 10 | **Category tree** | Entered directly in admin — nothing to send anyone |
+| 11 | **Logo** | Otherwise a typeset Instrument Serif wordmark, which reads as deliberate |
+| 12 | **Instagram handle** | Footer and structured data |
+| 13 | **Brand story copy** | Draft is loaded; replace when you have your own |
+
+### Can wait until after launch
+
+| # | Item |
+|---|---|
+| 14 | GA4 / Meta Pixel / Google Ads IDs — admin → Settings, any time |
+| 15 | Google Search Console + Bing verification |
+| 16 | **Rotate the Supabase personal access token** — it was pasted into a chat transcript |
+| 17 | Supabase Pro ($25/mo) for daily backups — before there are orders you cannot afford to lose |
+
+### Before the first real customer
+
+```bash
+node --env-file=.env.local scripts/clear-test-data.mjs
+```
+
+The database contains one test product, two test categories, a test review and
+some test analytics rows from build verification.
 
 ---
 

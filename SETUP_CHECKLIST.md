@@ -8,29 +8,52 @@
 > `.env.local` — paste it into that file directly, never into chat.
 >
 > **Companion to:** [MASTER_PLAN.md](MASTER_PLAN.md) — the technical spec.
-> **Last updated:** 2026-09-12
+> **Last updated:** 2026-09-13
 
 ---
+
+## 🎉 The code is finished
+
+All seven build phases are complete, tested against the live database, and
+pushed — 14 commits on `main`. Nothing on this list blocks development any
+more; it is now the only thing standing between you and launch.
+
+Run it locally with `npm run dev`: storefront at `localhost:3000`, admin at
+`/admin`.
 
 ## Already done ✅
 
 | Item | Detail |
 |---|---|
-| GitHub repository | `Adityasoni2512/house-of-shivalika` |
-| Supabase project | `House-of-shivalika` · ref `jswlbptdefeezpsessub` · ap-southeast-1 · Postgres 17.6 |
-| Supabase CLI auth | Linked, migrations can be pushed |
-| Service role key | Fetched and stored in `.env.local` |
+| GitHub repository | `Adityasoni2512/house-of-shivalika` · 14 commits · no secrets tracked |
+| Supabase project | `House-of-shivalika` · `jswlbptdefeezpsessub` · ap-southeast-1 · Postgres 17.6 |
+| Database schema | 17 tables applied, RLS verified blocking, seed data loaded |
+| Supabase CLI | Linked; `npx supabase db push` works |
+| Service role key | In `.env.local` |
 | Ops secrets | `REVALIDATE_SECRET`, `CRON_SECRET` generated |
+| First admin account | Created — change the password at **admin → Admins** |
+| Static page copy | Drafted and loaded for all seven pages |
 
 ---
 
-## Do these first — they unblock the most
+## Do these first
 
-If you only do three things before we reconvene, do these:
+In order. The first three are what stop the site from functioning at all.
 
-1. **Cloudinary account** (§1.1) — 10 min. Without it, no product images can be uploaded at all.
-2. **Product photography + product data** (§1.4) — the real critical path. Everything else waits on this.
-3. **WhatsApp business number** (§3.1) — 5 min. Without it the store cannot take a single order.
+| | Item | Section | Time | What it unblocks |
+|---|---|---|---|---|
+| 1 | **Cloudinary account** | §1.1 | 10 min | Every image upload. Nothing can be uploaded without it |
+| 2 | **Product photography + data** | §1.4 | ongoing | Having anything to sell — the real critical path |
+| 3 | **WhatsApp number** | §3.1 | 5 min | Taking a single order. Buttons stay hidden until set |
+| 4 | **Domain** | §6.1 | 15 min | Going live |
+| 5 | **Netlify account** | §6.2 | 30 min | Deployment |
+
+Then the legal numbers and size chart (§7.1) before you take a real order.
+
+### Change your admin password
+
+It was set during the build and passed through a chat transcript. Sign in, go
+to **admin → Admins → Change your password**. Two minutes.
 
 ---
 
@@ -59,12 +82,13 @@ Image hosting and delivery. Nothing can be uploaded without it.
 
 ---
 
-### 1.2 First admin account
+### 1.2 Admin accounts — ✅ first one created
 
-Decide the email and password for the first admin login. Everything else is created from inside the panel afterwards.
+The first admin exists and works. What is left:
 
-- [ ] Admin email (suggest a shared address, not a personal one — e.g. `admin@houseofshivalika.com`)
-- [ ] Strong password, stored in a password manager
+- [ ] **Change the password.** It was set during the build and passed through a chat transcript. **admin → Admins → Change your password**
+- [ ] Add accounts for anyone else on the team — **admin → Admins**. Everyone has identical access; there are no roles
+- [ ] Consider moving to a shared address (`admin@houseofshivalika.com`) once business email is set up (§6.3), so access does not sit in one person's inbox
 
 **Time:** 2 minutes.
 
@@ -122,9 +146,12 @@ A clean wordmark reads as deliberate and is trivially replaceable later. Not wor
 
 ### 2.2 Copy
 
-- [ ] **Brand story** — 100–150 words, used on the homepage and About page *(we will draft if not supplied)*
-- [ ] **Announcement bar** — one line, e.g. "Free shipping on orders above ₹1,499"
-- [ ] **Homepage hero** — headline + subline + 1–3 banner images (desktop 2400×1000px, mobile 1200×1500px)
+- [ ] **Brand story** — a draft is live on the About page. Read it and rewrite in your own voice; it is written blind, so it will not sound like you yet. **admin → Pages → About**
+- [ ] **Announcement bar** — one line, e.g. "Free shipping on orders above ₹1,499". Off by default. **admin → Settings**
+- [ ] **Homepage hero** — headline + eyebrow + 1–3 banner images (desktop 2400×1000px, mobile 1200×1500px). **admin → Banners**
+
+Without a banner the homepage falls back to a clean typographic hero, which
+reads as deliberate rather than broken — so this is not urgent.
 
 ### 2.3 Social
 
@@ -171,8 +198,8 @@ Feeds the Shipping Policy page and the cart's shipping note.
 
 ## 4. Reviews
 
-- [ ] Approve the review-request WhatsApp message template *(we will draft it)*
-- [ ] Confirm the invite link expiry — default is **60 days**
+- [ ] Read the review-request WhatsApp message — it is written and wired to the one-click send button on each invite. Reword it if you would say it differently
+- [ ] Confirm the invite link expiry — currently **60 days**, changeable at **admin → Settings**
 - [ ] Decide who on the team moderates reviews, and how often
 
 **Process reminder:** reviews are invite-only. After an order is delivered, generate an invite in admin and send the link over WhatsApp. Nothing appears publicly until approved.
@@ -248,19 +275,31 @@ A `@gmail.com` address on a fashion brand's contact page costs you trust at exac
 
 ## 7. Legal & policy — **review before launch**
 
-We will draft all of these. **You must read and approve them** — they are commitments to customers, and we are not your lawyers.
+**All seven pages are drafted and live in the database.** Edit them at
+**admin → Pages** — the four legal ones show a warning banner in the editor.
 
-### 7.1 Numbers we need from you
+They contain **`[BRACKETED]` placeholders** that must be replaced with real
+values. Search each page for `[` to find them.
 
-| Page | What we need |
+**You must read and approve all four** — they are commitments to customers, and
+we are not your lawyers.
+
+### 7.1 Values to fill in
+
+| Page | Placeholders to replace |
 |---|---|
-| **Shipping Policy** | Charges, free threshold, dispatch time, delivery time, courier, serviceable areas |
-| **Returns & Exchange** | Return window (7/15/30 days), who pays return postage, condition requirements, non-returnable items, refund method and timeline, exchange process |
-| **Size Guide** | Real bust / waist / hip / length measurements in inches for every size |
-| **Contact** | Business email, phone, hours, registered address |
-| **Privacy Policy** | Confirm what you collect and how long you keep it |
+| **Shipping Policy** | `[₹ AMOUNT]` charge · `[₹ THRESHOLD]` free shipping · `[N]` dispatch days · `[N–N]` delivery days · `[COURIER NAMES]` |
+| **Returns & Exchange** | `[N]` day window · who pays return postage · `[N]` refund days · whether shipping is refundable |
+| **Size Guide** | The whole measurement table — currently `[ ]` for every cell |
+| **Privacy Policy** | `[DATE]` · `[N months]` lead retention · `[N years]` order retention · `[CONTACT EMAIL]` |
+| **Terms of Service** | `[DATE]` · `[CITY]` for jurisdiction · `[CONTACT EMAIL]` |
 
-⚠️ **The size chart is not filler.** For fast fashion it is the single biggest lever on your return rate. Guessed measurements cost real money every month.
+⚠️ **The size chart is not filler.** For fast fashion it is the single biggest
+lever on your return rate. Guessed measurements cost real money every month, and
+the page currently ships with an empty table and a visible warning.
+
+⚠️ **Do not launch with the brackets still in.** They are deliberately ugly so
+they cannot be missed, but they will be public the moment you deploy.
 
 ### 7.2 Sign-off
 
@@ -293,6 +332,18 @@ A settings slot for GSTIN is already built, so adding it later is a one-field ch
 | Watch Supabase DB size | Monthly | Free tier is 500 MB |
 | Supabase Pro ($25/mo) | When it matters | Unlocks daily backups. **Do this before you have orders you cannot afford to lose** |
 | Review Core Web Vitals | Month 1 | GSC reports real-user data after ~28 days |
+| Run a Lighthouse audit | After real photos | Deliberately skipped during the build — it is meaningless against placeholder imagery |
+
+### Before your first real customer
+
+```bash
+node --env-file=.env.local scripts/clear-test-data.mjs
+```
+
+The database holds one test product, two test categories, a test review and some
+test analytics rows from build verification. The script removes only those —
+anything with a `test-` slug, a `TEST-` SKU, or the seeded test visitor id. Real
+records are untouched.
 
 ---
 

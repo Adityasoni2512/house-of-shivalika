@@ -6,6 +6,27 @@ checkout. No customer accounts, no payment gateway.
 
 **Next.js 16 · React 19 · TypeScript · Tailwind v4 · Supabase · Cloudinary · Netlify**
 
+> **Status:** build complete, pre-launch. All features are implemented and
+> tested against the live database. What remains is external setup and content
+> — see [SETUP_CHECKLIST.md](SETUP_CHECKLIST.md).
+
+## What's built
+
+**Storefront** — homepage with scheduled banners · listing pages with unlimited
+category nesting and URL-driven filters · product pages with gallery, zoom, size
+states and reviews · on-site search · cart · seven static pages · invite-only
+review submission.
+
+**Admin** — dashboard · products with per-size stock, image upload and duplicate
+· nested categories · size library · fast stock screen · leads · orders with
+status pipeline · review moderation · review invites · banners · markdown page
+editor · admin management · analytics.
+
+**Analytics** — anonymous first-party event tracking into your own Postgres,
+with a six-panel dashboard: conversion funnel, products ranked by
+view-to-WhatsApp rate, on-site search terms, size demand, traffic sources,
+device split.
+
 ## Documentation
 
 | File | What it covers |
