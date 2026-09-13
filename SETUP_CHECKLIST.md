@@ -33,6 +33,7 @@ Run it locally with `npm run dev`: storefront at `localhost:3000`, admin at
 | Ops secrets | `REVALIDATE_SECRET`, `CRON_SECRET` generated |
 | First admin account | Created — change the password at **admin → Admins** |
 | Static page copy | Drafted and loaded for all seven pages |
+| WhatsApp number | `919624122767` — floating button, PDP and cart handoff all live |
 
 ---
 
@@ -40,15 +41,19 @@ Run it locally with `npm run dev`: storefront at `localhost:3000`, admin at
 
 In order. The first three are what stop the site from functioning at all.
 
-| | Item | Section | Time | What it unblocks |
+| | Item | Section | Time | Status |
 |---|---|---|---|---|
-| 1 | **Cloudinary account** | §1.1 | 10 min | Every image upload. Nothing can be uploaded without it |
-| 2 | **Product photography + data** | §1.4 | ongoing | Having anything to sell — the real critical path |
-| 3 | **WhatsApp number** | §3.1 | 5 min | Taking a single order. Buttons stay hidden until set |
-| 4 | **Domain** | §6.1 | 15 min | Going live |
-| 5 | **Netlify account** | §6.2 | 30 min | Deployment |
+| 1 | **WhatsApp number** | §3.1 | 5 min | ✅ **Done** — `919624122767`, buttons are live |
+| 2 | **Cloudinary account** | §1.1 | 5 min | ⏳ Account created; 3 keys still needed in `.env.local` |
+| 3 | **Domain** | §6.1 | 15 min | ⏳ Not started |
+| 4 | **Netlify account** | §6.2 | 30 min | ⏳ Not started |
 
 Then the legal numbers and size chart (§7.1) before you take a real order.
+
+**Catalogue entry (§1.3, §1.4) is owned by the admin team**, working directly in
+the admin panel. It is not a blocker on anyone else — but nothing can be
+uploaded until the Cloudinary keys are in place, so item 2 gates the team
+starting.
 
 ### Change your admin password
 
@@ -65,20 +70,22 @@ Image hosting and delivery. Nothing can be uploaded without it.
 
 1. Sign up free at [cloudinary.com/users/register_free](https://cloudinary.com/users/register_free)
 2. **Settings → API Keys** → copy **Cloud name**, **API Key**, **API Secret**
-3. **Settings → Upload → Upload presets → Add upload preset**
-   - Name: `house-of-shivalika`
-   - Signing mode: **Signed**
-   - Folder: `house-of-shivalika`
-   - Save
-4. Paste into `.env.local`:
+3. Paste into `.env.local`:
    ```
    NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=
    CLOUDINARY_API_KEY=
    CLOUDINARY_API_SECRET=
    ```
+4. Restart the dev server — env vars are read at boot
+
+**No upload preset is needed.** The server signs each upload individually with
+the API secret, which never reaches the browser. Folders (`products`,
+`categories`, `banners`, `reviews`) are created automatically on first upload
+and validated against an allow-list, so a caller cannot write anywhere else in
+the account.
 
 **Blocks:** all product images, banners, review photos.
-**Time:** ~10 minutes. **Cost:** free.
+**Time:** ~5 minutes. **Cost:** free.
 
 ---
 
@@ -107,9 +114,10 @@ Entered directly in the admin panel — nothing to send anyone. Worth sketching 
 
 ---
 
-### 1.4 Product photography & data — **CRITICAL PATH**
+### 1.4 Product photography & data — **owned by the admin team**
 
-The single biggest dependency in the project.
+Entered directly in the admin panel, product by product. Not a blocker on
+anything else, but the catalogue is the site.
 
 **Per product you will need:**
 
@@ -162,9 +170,9 @@ reads as deliberate rather than broken — so this is not urgent.
 
 ## 3. Orders & WhatsApp
 
-### 3.1 WhatsApp business number — **BLOCKING**
+### 3.1 WhatsApp business number — ✅ set
 
-- [ ] The number that will receive orders, with country code (e.g. `919876543210`)
+- [x] Number set: **919624122767** — live on the site now
 - [ ] Install **WhatsApp Business** (free app) on that number
 - [ ] Set up: business profile, display name "House of Shivalika", profile photo, business hours
 - [ ] Configure a **greeting message** and an **away message**
